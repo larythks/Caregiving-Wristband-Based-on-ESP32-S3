@@ -14,6 +14,8 @@
 #include "app_config.h"
 #include "i2c_master.h"
 #include "oled.h"
+#include "onewire.h"
+#include "ds18b20.h"
 
 static const char *TAG = TAG_MAIN;
 
@@ -104,11 +106,60 @@ void app_main(void)
         ESP_LOGW(TAG, "OLED not detected, skipping initialization");
     }
 
+    /* Initialize DS18B20 Temperature Sensor (Day 4) */
+    ESP_LOGI(TAG, "========================================");
+    ESP_LOGI(TAG, "Initializing DS18B20 Sensor (Day 4)");
+    ESP_LOGI(TAG, "========================================");
+
+    onewire_bus_t onewire_bus;
+    ds18b20_device_t ds18b20_device;
+    bool ds18b20_available = false;
+
+    ret = onewire_init(&onewire_bus, DS18B20_GPIO);
+    if (ret == ESP_OK) {
+        ESP_LOGI(TAG, "1-Wire bus initialized on GPIO%d", DS18B20_GPIO);
+
+        // Initialize DS18B20 (skip ROM for single device)
+        ret = ds18b20_init(&ds18b20_device, &onewire_bus, NULL);
+        if (ret == ESP_OK) {
+            ESP_LOGI(TAG, "DS18B20 temperature sensor initialized successfully");
+            ds18b20_available = true;
+
+            // Set resolution to 12-bit for maximum accuracy
+            ret = ds18b20_set_resolution(&ds18b20_device, DS18B20_RESOLUTION_12BIT);
+            if (ret == ESP_OK) {
+                ESP_LOGI(TAG, "DS18B20 resolution set to 12-bit (0.0625°C)");
+            }
+        } else {
+            ESP_LOGW(TAG, "DS18B20 not detected on GPIO%d", DS18B20_GPIO);
+        }
+    } else {
+        ESP_LOGE(TAG, "Failed to initialize 1-Wire bus");
+    }
+
     /* Main loop */
     ESP_LOGI(TAG, "Entering main loop...");
     uint32_t loop_count = 0;
     while (1) {
         ESP_LOGI(TAG, "Loop #%lu - Free heap: %lu bytes", ++loop_count, esp_get_free_heap_size());
+
+        // Read temperature from DS18B20
+        if (ds18b20_available) {
+            float temperature = 0.0f;
+            ret = ds18b20_read_temperature(&ds18b20_device, &temperature);
+            if (ret == ESP_OK) {
+                ESP_LOGI(TAG, "Temperature: %.2f°C", temperature);
+
+                // Update OLED with temperature display
+                if (i2c_device_exists(OLED_I2C_ADDRESS)) {
+                    char temp_str[32];
+                    snprintf(temp_str, sizeof(temp_str), "Temp: %.2fC", temperature);
+                    oled_show_string(0, 4, temp_str);
+                }
+            } else {
+                ESP_LOGW(TAG, "Failed to read temperature");
+            }
+        }
 
         // Update OLED with real-time counter
         if (i2c_device_exists(OLED_I2C_ADDRESS)) {
