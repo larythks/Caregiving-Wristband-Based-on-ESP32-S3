@@ -1,7 +1,7 @@
 /**
  * @file main.c
  * @brief ESP32-S3 Wristband Main Entry Point
- * @author Claude AI Assistant
+ * @author larythks
  * @date 2025-12-30
  */
 

@@ -1,0 +1,30 @@
+idf_component_register(
+    SRCS
+        "i2c/i2c_master.c"
+        "oled/oled.c"
+        "alarm_io/alarm_io.c"
+        "battery/battery.c"
+        "button/button.c"
+        "ds18b20/ds18b20.c"
+        "i2s_mic/i2s_mic.c"
+        "max30102/max30102.c"
+        "mpu6050/mpu6050.c"
+        "onewire/onewire.c"
+        "usart/usart.c"
+    INCLUDE_DIRS
+        "i2c"
+        "oled"
+        "alarm_io"
+        "battery"
+        "button"
+        "ds18b20"
+        "i2s_mic"
+        "max30102"
+        "mpu6050"
+        "onewire"
+        "usart"
+    REQUIRES
+        driver
+        nvs_flash
+        common
+)

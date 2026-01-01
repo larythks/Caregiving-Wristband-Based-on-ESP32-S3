@@ -1,7 +1,7 @@
 /**
  * @file i2c_master.h
  * @brief I2C Master Driver for ESP32-S3 Wristband
- * @author Claude AI Assistant
+ * @author larythks
  * @date 2025-12-30
  *
  * This driver provides I2C master functionality for communicating with:

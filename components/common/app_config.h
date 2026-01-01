@@ -1,7 +1,7 @@
 /**
  * @file app_config.h
  * @brief ESP32-S3 Wristband Global Configuration
- * @author Claude AI Assistant
+ * @author larythks
  * @date 2025-12-30
  */
 

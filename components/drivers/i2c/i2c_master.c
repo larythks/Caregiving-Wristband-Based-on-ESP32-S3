@@ -1,7 +1,7 @@
 /**
  * @file i2c_master.c
  * @brief I2C Master Driver Implementation for ESP32-S3 Wristband
- * @author Claude AI Assistant
+ * @author larythks
  * @date 2025-12-30
  */
 

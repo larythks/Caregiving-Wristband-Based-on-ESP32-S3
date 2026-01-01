@@ -49,10 +49,11 @@
   - 验证串口输出和调试功能
   - 熟悉`idf.py build/flash/monitor`命令
 
-- **任务1.2**: 实现I2C主机驱动 [drivers/i2c/i2c_master.c](drivers/i2c/i2c_master.c)
+- **任务1.2**: 实现I2C主机驱动 [components/drivers/i2c/i2c_master.c](components/drivers/i2c/i2c_master.c)
   - 初始化I2C总线（SDA=IO8, SCL=IO9, 400kHz）
   - 实现读写函数：`i2c_write_byte()`, `i2c_read_bytes()`
   - 实现设备扫描函数：`i2c_scan_devices()`
+  - 配置驱动层CMakeLists.txt，将I2C驱动集成到drivers组件
   - 测试：扫描并打印I2C总线上的所有设备地址
 
 **交付物**:
@@ -60,7 +61,7 @@
 - 能够识别I2C总线上的3个设备（OLED、MAX30102、MPU6050）
 
 #### Day 3: OLED显示驱动开发
-- **任务1.3**: 实现OLED显示驱动 [drivers/oled/oled.c](drivers/oled/oled.c)
+- **任务1.3**: 实现OLED显示驱动 [components/drivers/oled/oled.c](components/drivers/oled/oled.c)
   - 集成SH1106驱动库（推荐使用ESP-IDF组件或开源库）
   - 实现初始化函数：`oled_init()`
   - 实现基本绘图函数：
@@ -68,6 +69,7 @@
     - `oled_show_string(x, y, text)` - 显示字符串
     - `oled_show_number(x, y, num)` - 显示数字
     - `oled_refresh()` - 刷新显示缓冲区
+  - 更新drivers组件CMakeLists.txt，添加oled驱动编译
   - 测试：显示"ESP32-S3 Wristband"和实时计数
 
 **交付物**:
@@ -75,11 +77,11 @@
 - 提供演示代码展示基本UI框架
 
 #### Day 4: DS18B20温度传感器驱动
-- **任务1.4**: 实现1-Wire协议驱动 [drivers/onewire/onewire.c](drivers/onewire/onewire.c)
+- **任务1.4**: 实现1-Wire协议驱动 [components/drivers/onewire/onewire.c](components/drivers/onewire/onewire.c)
   - 实现1-Wire时序控制（复位、写位、读位）
   - 实现CRC8校验函数
 
-- **任务1.5**: 实现DS18B20驱动 [drivers/ds18b20/ds18b20.c](drivers/ds18b20/ds18b20.c)
+- **任务1.5**: 实现DS18B20驱动 [components/drivers/ds18b20/ds18b20.c](components/drivers/ds18b20/ds18b20.c)
   - 初始化函数：`ds18b20_init()`
   - 读取温度函数：`ds18b20_read_temperature()`（返回浮点数，单位℃）
   - 测试：每秒读取并在OLED上显示体温数据
@@ -88,7 +90,7 @@
 - 能够实时读取并显示温度（精度0.1℃）
 
 #### Day 5-6: MPU6050运动传感器驱动
-- **任务1.6**: 实现MPU6050驱动 [drivers/mpu6050/mpu6050.c](drivers/mpu6050/mpu6050.c)
+- **任务1.6**: 实现MPU6050驱动 [components/drivers/mpu6050/mpu6050.c](components/drivers/mpu6050/mpu6050.c)
   - 初始化MPU6050（I2C地址0x68）
   - 读取6轴原始数据（加速度+陀螺仪）：
     - `mpu6050_read_accel()` - 读取加速度（X, Y, Z）
@@ -106,7 +108,7 @@
 - 能够检测静止、行走、挥手等基本动作
 
 #### Day 7: 按键和LED驱动
-- **任务1.8**: 实现按键驱动 [drivers/button/button.c](drivers/button/button.c)
+- **任务1.8**: 实现按键驱动 [components/drivers/button/button.c](components/drivers/button/button.c)
   - 配置GPIO输入引脚（SW1报警按键、SW2电源开关、SW3复位按键、BOOT按键IO0）
   - 实现按键扫描和消抖
   - 支持短按、长按、双击检测
@@ -114,7 +116,7 @@
   - SW2特殊功能：电源开关（长按3秒开机/关机）
   - 测试：按键触发LED闪烁
 
-- **任务1.9**: 实现LED控制驱动 [drivers/alarm_io/alarm_io.c](drivers/alarm_io/alarm_io.c)
+- **任务1.9**: 实现LED控制驱动 [components/drivers/alarm_io/alarm_io.c](components/drivers/alarm_io/alarm_io.c)
   - 配置GPIO输出引脚（LED1=IO6, LED2=IO2, LED3=IO1）
   - LED1：电源指示灯（设备通电时常亮）
   - LED2：充满指示灯（TP4056 STDBY引脚控制，电池充满时亮）
@@ -142,7 +144,7 @@
 **目标**: 完成心率血氧监测、音频采集、电池管理等高级功能
 
 #### Day 8-9: MAX30102心率血氧传感器驱动
-- **任务2.1**: 实现MAX30102驱动 [drivers/max30102/max30102.c](drivers/max30102/max30102.c)
+- **任务2.1**: 实现MAX30102驱动 [components/drivers/max30102/max30102.c](components/drivers/max30102/max30102.c)
   - 初始化MAX30102（I2C地址0x57）
   - 配置LED电流和采样率（100Hz）
   - 读取红光和红外光原始数据
@@ -161,7 +163,7 @@
 - （可选）实现血氧饱和度计算（R值法）
 
 #### Day 10-11: I2S麦克风音频采集
-- **任务2.3**: 实现I2S驱动 [drivers/i2s_mic/i2s_mic.c](drivers/i2s_mic/i2s_mic.c)
+- **任务2.3**: 实现I2S驱动 [components/drivers/i2s_mic/i2s_mic.c](components/drivers/i2s_mic/i2s_mic.c)
   - 配置I2S接口（SCK=IO15, SD=IO16, WS=IO17）
   - 设置采样率16kHz，位宽32bit
   - 实现DMA循环缓冲区
@@ -179,7 +181,7 @@
 - 能够检测拍手、说话等声音事件
 
 #### Day 12-13: 电池管理和电量监测
-- **任务2.5**: 实现电池电压ADC采集 [drivers/battery/battery.c](drivers/battery/battery.c)
+- **任务2.5**: 实现电池电压ADC采集 [components/drivers/battery/battery.c](components/drivers/battery/battery.c)
   - 配置ADC1通道（IO38连接电池分压电路）
   - 实现电压采集函数：`battery_read_voltage()`
   - 电压转换：ADC值 → 实际电压（通过R15/R16分压比计算）
@@ -197,7 +199,7 @@
 - 充电状态自动识别和LED指示
 
 #### Day 14: UART调试接口和日志系统
-- **任务2.7**: 配置UART串口 [drivers/usart/usart.c](drivers/usart/usart.c)
+- **任务2.7**: 配置UART串口 [components/drivers/usart/usart.c](components/drivers/usart/usart.c)
   - 配置UART0（RXD0, TXD0用于调试）
   - 实现串口发送和接收函数
   - 集成ESP-IDF日志系统（ESP_LOGI/ESP_LOGW/ESP_LOGE）
@@ -220,7 +222,7 @@
 **目标**: 实现数据处理算法、业务逻辑和用户界面
 
 #### Day 15-16: 传感器数据采集管理模块
-- **任务3.1**: 实现数据采集任务调度 [sensing/sensor_manager.c](sensing/sensor_manager.c)
+- **任务3.1**: 实现数据采集任务调度 [components/sensing/sensor_manager.c](components/sensing/sensor_manager.c)
   - 创建FreeRTOS任务管理各传感器
   - 实现任务优先级分配：
     - 高优先级：按键响应（实时性）
@@ -238,9 +240,10 @@
     } sensor_data_t;
     ```
   - 实现全局数据共享（使用互斥锁保护）
+  - 创建sensing组件CMakeLists.txt
   - 测试：所有传感器数据能同步更新
 
-- **任务3.2**: 实现数据平滑和异常值过滤
+- **任务3.2**: 实现数据平滑和异常值过滤 [components/sensing/data_filter.c](components/sensing/data_filter.c)
   - 对心率、体温数据进行滑动平均滤波
   - 过滤异常值（如心率>200或<40）
   - 测试：数据波动更稳定
@@ -250,13 +253,14 @@
 - 数据更新频率稳定
 
 #### Day 17-18: 运动算法实现（计步和姿态识别）
-- **任务3.3**: 实现计步算法 [logic/step_counter.c](logic/step_counter.c)
+- **任务3.3**: 实现计步算法 [components/logic/step_counter.c](components/logic/step_counter.c)
   - 计算合成加速度：`sqrt(ax² + ay² + az²)`
   - 实现峰值检测和阈值判断（识别步态周期）
   - 添加防误判逻辑（时间窗口过滤）
+  - 创建logic组件CMakeLists.txt
   - 测试：手臂摆动模拟行走，验证计步准确性（误差<5%）
 
-- **任务3.4**: 实现简单姿态识别 [logic/gesture_recognition.c](logic/gesture_recognition.c)
+- **任务3.4**: 实现简单姿态识别 [components/logic/gesture_recognition.c](components/logic/gesture_recognition.c)
   - 识别基本姿态：
     - 静止：加速度变化<阈值
     - 行走：周期性摆动
@@ -269,7 +273,7 @@
 - 能识别4种基本姿态
 
 #### Day 19-20: 用户界面开发
-- **任务3.5**: 实现OLED多页面UI [ui/ui_manager.c](ui/ui_manager.c)
+- **任务3.5**: 实现OLED多页面UI [components/ui/ui_manager.c](components/ui/ui_manager.c)
   - 设计5个显示页面：
     1. **主界面**：时间、日期、电量
     2. **健康监测**：心率、血氧、体温
@@ -278,9 +282,10 @@
     5. **设置菜单**：屏幕亮度、关于
   - 实现页面切换逻辑（按键控制）
   - 实现图标和动画效果（心跳图标、进度条）
+  - 创建ui组件CMakeLists.txt
   - 测试：按键切换所有页面流畅无卡顿
 
-- **任务3.6**: 实现交互逻辑 [ui/input_handler.c](ui/input_handler.c)
+- **任务3.6**: 实现交互逻辑 [components/ui/input_handler.c](components/ui/input_handler.c)
   - 按键映射：
     - BOOT按键：页面切换
     - SW1：报警触发（长按开始/停止报警）
@@ -295,7 +300,7 @@
 - 流畅的按键交互体验
 
 #### Day 21: 蓝牙BLE与微信小程序通信
-- **任务3.7**: 实现BLE广播和连接 [net/ble_service.c](net/ble_service.c)
+- **任务3.7**: 实现BLE广播和连接 [components/net/ble_service.c](components/net/ble_service.c)
   - 初始化BLE栈（使用NimBLE，兼容微信小程序）
   - 配置设备名称："ESP32-Wristband"
   - 实现微信小程序专用BLE GATT服务：
@@ -307,9 +312,10 @@
     - 特征值5：报警状态（可读+可写+通知，用于紧急呼叫）
   - 实现BLE广播（微信可扫描）
   - 实现连接管理和断线重连
+  - 创建net组件CMakeLists.txt
   - 测试：使用微信小程序蓝牙API连接并读取数据
 
-- **任务3.8**: 实现数据上报协议 [net/wechat_protocol.c](net/wechat_protocol.c)
+- **任务3.8**: 实现数据上报协议 [components/net/wechat_protocol.c](components/net/wechat_protocol.c)
   - 定义数据打包格式（JSON或二进制协议）
   - 实现定时上报机制（心率每5秒，步数每分钟）
   - 实现报警消息推送（按下SW1或语音"呼叫家人"）
@@ -335,7 +341,7 @@
 **目标**: 系统集成、完善功能、压力测试、准备答辩演示
 
 #### Day 22-23: 语音识别、语音播报和报警系统
-- **任务4.1**: 实现报警系统 [drivers/alarm_io/alarm_system.c](drivers/alarm_io/alarm_system.c)
+- **任务4.1**: 实现报警系统 [components/drivers/alarm_io/alarm_system.c](components/drivers/alarm_io/alarm_system.c)
   - 实现SW1按键触发报警功能
   - LED1急速闪烁控制（10Hz PWM）
   - 扬声器输出警报音（2kHz音调，间断性发声）
@@ -343,7 +349,7 @@
   - 实现BLE报警消息推送到微信小程序
   - 测试：按SW1触发报警，LED+扬声器工作，小程序收到通知
 
-- **任务4.2**: 实现语音识别功能 [voice/voice_recognition.c](voice/voice_recognition.c)
+- **任务4.2**: 实现语音识别功能 [components/voice/voice_recognition.c](components/voice/voice_recognition.c)
   - 集成离线语音识别库（推荐：PocketSphinx移植版或自定义关键词检测）
   - 实现关键词唤醒："小手环"或"你好手环"
   - 实现命令识别：
@@ -352,15 +358,16 @@
     - "呼叫家人" → 触发紧急呼叫，通过小程序通知
   - 实现简化算法：端点检测 + MFCC特征 + 模板匹配
   - 备选方案：基于幅度和时长的简单关键词识别
+  - 创建voice组件CMakeLists.txt
   - 测试：对麦克风说命令，手环正确识别并执行
 
-- **任务4.3**: 实现语音播报功能 [voice/voice_tts.c](voice/voice_tts.c)
+- **任务4.3**: 实现语音播报功能 [components/voice/voice_tts.c](components/voice/voice_tts.c)
   - 方案1：预录音频文件（推荐，更清晰）
     - 录制常用播报语音："当前心率XX次每分钟"、"当前步数XX步"等
     - 使用ADPCM压缩存储在SPIFFS
   - 方案2：简单TTS（文字转语音）
     - 集成轻量级TTS库或数字语音合成
-  - 实现I2S音频播放 [voice/audio_player.c](voice/audio_player.c)
+  - 实现I2S音频播放 [components/voice/audio_player.c](components/voice/audio_player.c)
     - 使用MAX98357A放大器输出
     - 支持播放预设音频和组合播报
   - 测试：语音命令后，扬声器播报查询结果
@@ -372,7 +379,7 @@
 - "呼叫家人"功能触发小程序紧急通知
 
 #### Day 24: 低功耗优化
-- **任务4.4**: 实现省电模式 [common/power_manager.c](common/power_manager.c)
+- **任务4.4**: 实现省电模式 [components/common/power_manager.c](components/common/power_manager.c)
   - 屏幕休眠时进入Light Sleep模式
   - 配置唤醒源（按键中断、定时器）
   - 降低传感器采样频率（屏幕关闭时）
@@ -470,71 +477,130 @@
 
 ---
 
+## 项目架构说明
+
+本项目采用 **ESP-IDF 组件化架构**,将功能模块划分为独立的 components,提高代码的可维护性和可复用性。
+
+### 目录结构
+
+```
+ESP32_S3_Wristband/
+├── main/                           # 主程序
+│   ├── main.c                      # 程序入口
+│   └── CMakeLists.txt
+├── components/                     # 组件目录（所有功能模块）
+│   ├── common/                     # 公共模块
+│   │   ├── app_config.h            # 全局配置头文件
+│   │   └── CMakeLists.txt
+│   ├── drivers/                    # 硬件驱动层
+│   │   ├── i2c/                    # I2C总线驱动
+│   │   ├── oled/                   # OLED显示驱动
+│   │   ├── onewire/                # 1-Wire协议驱动
+│   │   ├── ds18b20/                # DS18B20温度传感器
+│   │   ├── max30102/               # MAX30102心率血氧传感器
+│   │   ├── mpu6050/                # MPU6050运动传感器
+│   │   ├── i2s_mic/                # I2S麦克风驱动
+│   │   ├── button/                 # 按键驱动
+│   │   ├── alarm_io/               # LED和蜂鸣器驱动
+│   │   ├── battery/                # 电池管理驱动
+│   │   ├── usart/                  # UART串口驱动
+│   │   └── CMakeLists.txt          # 驱动层统一编译配置
+│   ├── sensing/                    # 传感器数据采集层
+│   ├── logic/                      # 应用逻辑层
+│   ├── ui/                         # 用户界面层
+│   ├── net/                        # 网络通信层
+│   └── voice/                      # 语音处理层
+├── CMakeLists.txt                  # 项目主配置
+├── sdkconfig                       # ESP-IDF配置
+├── PROGRESS.md                     # 开发进度跟踪
+├── Development Plan.md             # 开发计划（本文档）
+└── BUILD_GUIDE.md                  # 编译烧录指南
+```
+
+### 组件化优势
+
+1. **模块独立性**: 每个驱动作为独立模块,可单独测试和复用
+2. **依赖管理清晰**: 通过 CMakeLists.txt 的 `REQUIRES` 明确组件依赖关系
+3. **编译优化**: ESP-IDF 自动处理组件依赖,只编译需要的模块
+4. **易于维护**: 新增功能只需在对应 components 子目录下添加代码
+
+---
+
 ## 关键文件清单
 
-### 驱动层 (drivers/)
+### 驱动层 (components/drivers/)
 | 文件路径 | 功能描述 | 优先级 |
 |---------|---------|-------|
-| [drivers/i2c/i2c_master.c](drivers/i2c/i2c_master.c) | I2C总线驱动 | P0 |
-| [drivers/onewire/onewire.c](drivers/onewire/onewire.c) | 1-Wire协议驱动 | P0 |
-| [drivers/oled/oled.c](drivers/oled/oled.c) | OLED显示驱动 | P0 |
-| [drivers/ds18b20/ds18b20.c](drivers/ds18b20/ds18b20.c) | DS18B20温度传感器 | P0 |
-| [drivers/max30102/max30102.c](drivers/max30102/max30102.c) | MAX30102心率血氧传感器 | P0 |
-| [drivers/mpu6050/mpu6050.c](drivers/mpu6050/mpu6050.c) | MPU6050运动传感器 | P0 |
-| [drivers/i2s_mic/i2s_mic.c](drivers/i2s_mic/i2s_mic.c) | I2S麦克风驱动 | P1 |
-| [drivers/button/button.c](drivers/button/button.c) | 按键输入驱动 | P0 |
-| [drivers/alarm_io/alarm_io.c](drivers/alarm_io/alarm_io.c) | LED和蜂鸣器驱动 | P0 |
-| [drivers/battery/battery.c](drivers/battery/battery.c) | 电池管理驱动 | P1 |
-| [drivers/usart/usart.c](drivers/usart/usart.c) | UART串口驱动 | P2 |
+| [components/drivers/i2c/i2c_master.c](components/drivers/i2c/i2c_master.c) | I2C总线驱动 | P0 |
+| [components/drivers/i2c/i2c_master.h](components/drivers/i2c/i2c_master.h) | I2C驱动头文件 | P0 |
+| [components/drivers/oled/oled.c](components/drivers/oled/oled.c) | OLED显示驱动 | P0 |
+| [components/drivers/oled/oled.h](components/drivers/oled/oled.h) | OLED驱动头文件 | P0 |
+| [components/drivers/onewire/onewire.c](components/drivers/onewire/onewire.c) | 1-Wire协议驱动 | P0 |
+| [components/drivers/ds18b20/ds18b20.c](components/drivers/ds18b20/ds18b20.c) | DS18B20温度传感器 | P0 |
+| [components/drivers/max30102/max30102.c](components/drivers/max30102/max30102.c) | MAX30102心率血氧传感器 | P0 |
+| [components/drivers/mpu6050/mpu6050.c](components/drivers/mpu6050/mpu6050.c) | MPU6050运动传感器 | P0 |
+| [components/drivers/i2s_mic/i2s_mic.c](components/drivers/i2s_mic/i2s_mic.c) | I2S麦克风驱动 | P1 |
+| [components/drivers/button/button.c](components/drivers/button/button.c) | 按键输入驱动 | P0 |
+| [components/drivers/alarm_io/alarm_io.c](components/drivers/alarm_io/alarm_io.c) | LED和蜂鸣器驱动 | P0 |
+| [components/drivers/battery/battery.c](components/drivers/battery/battery.c) | 电池管理驱动 | P1 |
+| [components/drivers/usart/usart.c](components/drivers/usart/usart.c) | UART串口驱动 | P2 |
+| [components/drivers/CMakeLists.txt](components/drivers/CMakeLists.txt) | 驱动层统一编译配置 | P0 |
 
-### 传感器数据层 (sensing/)
+### 传感器数据层 (components/sensing/)
 | 文件路径 | 功能描述 | 优先级 |
 |---------|---------|-------|
-| [sensing/sensor_manager.c](sensing/sensor_manager.c) | 传感器数据采集管理 | P0 |
-| [sensing/data_filter.c](sensing/data_filter.c) | 数据滤波和平滑 | P1 |
+| [components/sensing/sensor_manager.c](components/sensing/sensor_manager.c) | 传感器数据采集管理 | P0 |
+| [components/sensing/data_filter.c](components/sensing/data_filter.c) | 数据滤波和平滑 | P1 |
+| [components/sensing/CMakeLists.txt](components/sensing/CMakeLists.txt) | 传感器层编译配置 | P0 |
 
-### 应用逻辑层 (logic/)
+### 应用逻辑层 (components/logic/)
 | 文件路径 | 功能描述 | 优先级 |
 |---------|---------|-------|
-| [logic/step_counter.c](logic/step_counter.c) | 计步算法 | P0 |
-| [logic/gesture_recognition.c](logic/gesture_recognition.c) | 姿态识别 | P1 |
-| [logic/heart_rate_algo.c](logic/heart_rate_algo.c) | 心率算法 | P0 |
+| [components/logic/step_counter.c](components/logic/step_counter.c) | 计步算法 | P0 |
+| [components/logic/gesture_recognition.c](components/logic/gesture_recognition.c) | 姿态识别 | P1 |
+| [components/logic/heart_rate_algo.c](components/logic/heart_rate_algo.c) | 心率算法 | P0 |
+| [components/logic/CMakeLists.txt](components/logic/CMakeLists.txt) | 逻辑层编译配置 | P0 |
 
-### 用户界面层 (ui/)
+### 用户界面层 (components/ui/)
 | 文件路径 | 功能描述 | 优先级 |
 |---------|---------|-------|
-| [ui/ui_manager.c](ui/ui_manager.c) | UI页面管理 | P0 |
-| [ui/input_handler.c](ui/input_handler.c) | 按键输入处理 | P0 |
-| [ui/display_pages.c](ui/display_pages.c) | 各个显示页面实现 | P0 |
+| [components/ui/ui_manager.c](components/ui/ui_manager.c) | UI页面管理 | P0 |
+| [components/ui/input_handler.c](components/ui/input_handler.c) | 按键输入处理 | P0 |
+| [components/ui/display_pages.c](components/ui/display_pages.c) | 各个显示页面实现 | P0 |
+| [components/ui/CMakeLists.txt](components/ui/CMakeLists.txt) | UI层编译配置 | P0 |
 
-### 网络通信层 (net/)
+### 网络通信层 (components/net/)
 | 文件路径 | 功能描述 | 优先级 |
 |---------|---------|-------|
-| [net/ble_service.c](net/ble_service.c) | 蓝牙BLE通信服务（微信小程序） | P0 |
-| [net/ble_gatt_server.c](net/ble_gatt_server.c) | BLE GATT服务器 | P0 |
-| [net/wechat_protocol.c](net/wechat_protocol.c) | 微信小程序数据协议 | P0 |
-| [net/emergency_call.c](net/emergency_call.c) | 紧急呼叫通知模块 | P0 |
+| [components/net/ble_service.c](components/net/ble_service.c) | 蓝牙BLE通信服务（微信小程序） | P0 |
+| [components/net/ble_gatt_server.c](components/net/ble_gatt_server.c) | BLE GATT服务器 | P0 |
+| [components/net/wechat_protocol.c](components/net/wechat_protocol.c) | 微信小程序数据协议 | P0 |
+| [components/net/emergency_call.c](components/net/emergency_call.c) | 紧急呼叫通知模块 | P0 |
+| [components/net/CMakeLists.txt](components/net/CMakeLists.txt) | 网络层编译配置 | P0 |
 
-### 语音处理层 (voice/)
+### 语音处理层 (components/voice/)
 | 文件路径 | 功能描述 | 优先级 |
 |---------|---------|-------|
-| [voice/voice_recognition.c](voice/voice_recognition.c) | 语音识别（关键词检测） | P0 |
-| [voice/voice_tts.c](voice/voice_tts.c) | 语音播报（TTS或预录音频） | P0 |
-| [voice/audio_player.c](voice/audio_player.c) | 音频播放 | P0 |
-| [voice/audio_recorder.c](voice/audio_recorder.c) | 音频录制（调试用） | P2 |
+| [components/voice/voice_recognition.c](components/voice/voice_recognition.c) | 语音识别（关键词检测） | P0 |
+| [components/voice/voice_tts.c](components/voice/voice_tts.c) | 语音播报（TTS或预录音频） | P0 |
+| [components/voice/audio_player.c](components/voice/audio_player.c) | 音频播放 | P0 |
+| [components/voice/audio_recorder.c](components/voice/audio_recorder.c) | 音频录制（调试用） | P2 |
+| [components/voice/CMakeLists.txt](components/voice/CMakeLists.txt) | 语音层编译配置 | P0 |
 
-### 公共模块层 (common/)
+### 公共模块层 (components/common/)
 | 文件路径 | 功能描述 | 优先级 |
 |---------|---------|-------|
-| [common/power_manager.c](common/power_manager.c) | 电源管理 | P1 |
-| [common/nvs_storage.c](common/nvs_storage.c) | 数据持久化存储 | P2 |
-| [common/time_manager.c](common/time_manager.c) | 时间管理（RTC） | P1 |
+| [components/common/app_config.h](components/common/app_config.h) | 全局配置头文件 | P0 |
+| [components/common/power_manager.c](components/common/power_manager.c) | 电源管理 | P1 |
+| [components/common/nvs_storage.c](components/common/nvs_storage.c) | 数据持久化存储 | P2 |
+| [components/common/time_manager.c](components/common/time_manager.c) | 时间管理（RTC） | P1 |
+| [components/common/CMakeLists.txt](components/common/CMakeLists.txt) | 公共模块编译配置 | P0 |
 
 ### 主程序 (main/)
 | 文件路径 | 功能描述 | 优先级 |
 |---------|---------|-------|
 | [main/main.c](main/main.c) | 主程序入口 | P0 |
-| [main/app_config.h](main/app_config.h) | 全局配置头文件 | P0 |
+| [main/CMakeLists.txt](main/CMakeLists.txt) | 主程序编译配置 | P0 |
 
 **优先级说明**:
 - P0: 核心功能，必须实现
@@ -881,6 +947,7 @@
 
 ✅ **循序渐进**: 从简单驱动到复杂算法，逐步提升难度
 ✅ **模块化开发**: 每个功能独立测试，降低集成风险
+✅ **组件化架构**: 采用ESP-IDF标准组件结构，提升代码可维护性
 ✅ **预留缓冲时间**: 第四周专门用于集成测试和答辩准备
 ✅ **优先级分明**: P0功能优先保证，P1/P2功能灵活调整
 ✅ **实践导向**: 每个任务都有明确的测试标准和交付物
@@ -890,5 +957,13 @@
 2. 遇到难题及时调整方案，不死磕
 3. 每周进行里程碑检查，确保进度
 4. 保持代码整洁，方便后期维护
+5. 充分利用ESP-IDF组件系统，模块间依赖清晰
+
+**组件化架构优势**:
+1. **清晰的模块边界**: 驱动层、传感器层、逻辑层、UI层、网络层、语音层各司其职
+2. **便于团队协作**: 不同模块可并行开发，互不干扰
+3. **易于测试**: 每个组件可独立编译和单元测试
+4. **高度可复用**: 驱动组件可用于其他ESP32-S3项目
+5. **依赖管理自动化**: ESP-IDF构建系统自动处理组件依赖关系
 
 祝您开发顺利，答辩成功！🎓

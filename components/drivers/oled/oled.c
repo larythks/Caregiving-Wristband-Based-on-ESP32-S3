@@ -1,7 +1,7 @@
 /**
  * @file oled.c
  * @brief SH1106 OLED Display Driver Implementation
- * @author Claude AI Assistant
+ * @author larythks
  * @date 2026-01-01
  *
  * This driver supports 1.3" SH1106 OLED display (128x64 pixels) via I2C
