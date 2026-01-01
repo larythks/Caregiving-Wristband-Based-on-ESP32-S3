@@ -1,0 +1,27 @@
+{
+  "C_Cpp.intelliSenseEngine": "default",
+  "idf.espIdfPathWin": "D:/studying/Espressif/frameworks/esp-idf-v5.2.3/",
+  "idf.pythonInstallPath": "D:\\studying\\Espressif\\tools\\idf-python\\3.11.2\\python.exe",
+  "idf.openOcdConfigs": [
+    "board/esp32s3-builtin.cfg"
+  ],
+  "idf.portWin": "COM5",
+  "idf.toolsPathWin": "D:\\studying\\Espressif",
+  "idf.customExtraVars": {
+    "IDF_TARGET": "esp32s3"
+  },
+  "idf.customExtraPaths": "D:\\studying\\Espressif\\tools\\xtensa-esp-elf\\esp-13.2.0_20230928\\xtensa-esp-elf\\bin",
+  "cmake.cmakePath": "D:\\studying\\Espressif\\tools\\cmake\\3.24.0\\bin\\cmake.exe",
+  "cmake.configureOnOpen": false,
+  "clangd.path": "D:\\studying\\Espressif\\tools\\esp-clang\\16.0.1-fe4f10a809\\esp-clang\\bin\\clangd.exe",
+  "clangd.arguments": [
+    "--background-index",
+    "--query-driver=**",
+    "--compile-commands-dir=f:\\graduation_project\\project\\ESP32_S3_Wristband\\build"
+  ],
+  "files.associations": {
+    "*.h": "c",
+    "app_config.h": "c",
+    "i2c_master.h": "c"
+  }
+}
