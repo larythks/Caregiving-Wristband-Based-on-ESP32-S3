@@ -16,23 +16,8 @@
 static const char *TAG = "ONEWIRE";
 
 /**
- * @brief Set GPIO direction to output
- */
-static inline void onewire_set_output(onewire_bus_t *bus)
-{
-    gpio_set_direction(bus->pin, GPIO_MODE_OUTPUT);
-}
-
-/**
- * @brief Set GPIO direction to input
- */
-static inline void onewire_set_input(onewire_bus_t *bus)
-{
-    gpio_set_direction(bus->pin, GPIO_MODE_INPUT);
-}
-
-/**
  * @brief Set GPIO output level to low
+ * In Open-Drain mode, writing 0 pulls the line low
  */
 static inline void onewire_set_low(onewire_bus_t *bus)
 {
@@ -40,7 +25,8 @@ static inline void onewire_set_low(onewire_bus_t *bus)
 }
 
 /**
- * @brief Set GPIO output level to high
+ * @brief Set GPIO output level to high (release the line)
+ * In Open-Drain mode, writing 1 releases the line (pulled high by external resistor)
  */
 static inline void onewire_set_high(onewire_bus_t *bus)
 {
@@ -49,6 +35,7 @@ static inline void onewire_set_high(onewire_bus_t *bus)
 
 /**
  * @brief Read GPIO input level
+ * In Open-Drain mode, we can read the line state at any time
  */
 static inline int onewire_read_level(onewire_bus_t *bus)
 {
@@ -109,9 +96,10 @@ bool onewire_reset(onewire_bus_t *bus)
         return false;
     }
 
+    int presence;
+
     // Disable interrupts for precise timing
-    portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
-    portENTER_CRITICAL(&mux);
+    portDISABLE_INTERRUPTS();
 
     // Send reset pulse (pull bus low for 480us)
     onewire_set_low(bus);
@@ -122,12 +110,12 @@ bool onewire_reset(onewire_bus_t *bus)
     onewire_delay_us(ONEWIRE_DELAY_RESET_WAIT);
 
     // Read presence pulse (device pulls bus low)
-    int presence = !onewire_read_level(bus);
+    presence = !onewire_read_level(bus);
 
     // Wait for presence pulse to complete
     onewire_delay_us(ONEWIRE_DELAY_RESET_READ);
 
-    portEXIT_CRITICAL(&mux);
+    portENABLE_INTERRUPTS();
 
     return presence;
 }
@@ -137,24 +125,23 @@ bool onewire_reset(onewire_bus_t *bus)
  */
 void onewire_write_bit(onewire_bus_t *bus, uint8_t bit)
 {
-    portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
-    portENTER_CRITICAL(&mux);
+    portDISABLE_INTERRUPTS();
 
     if (bit & 1) {
-        // Write 1: short low pulse, then release
+        // Write 1: short low pulse (< 15us), then release for rest of time slot
         onewire_set_low(bus);
-        onewire_delay_us(ONEWIRE_DELAY_WRITE_LOW);
+        onewire_delay_us(ONEWIRE_DELAY_WRITE_LOW);  // 1us
         onewire_set_high(bus);
-        onewire_delay_us(ONEWIRE_DELAY_WRITE_SLOT);
+        onewire_delay_us(ONEWIRE_DELAY_WRITE_SLOT); // 60us recovery
     } else {
-        // Write 0: long low pulse
+        // Write 0: long low pulse (> 60us)
         onewire_set_low(bus);
-        onewire_delay_us(ONEWIRE_DELAY_WRITE_SLOT);
+        onewire_delay_us(ONEWIRE_DELAY_WRITE_SLOT); // 60us
         onewire_set_high(bus);
-        onewire_delay_us(ONEWIRE_DELAY_WRITE_LOW);
+        onewire_delay_us(ONEWIRE_DELAY_WRITE_LOW);  // 1us recovery
     }
 
-    portEXIT_CRITICAL(&mux);
+    portENABLE_INTERRUPTS();
 }
 
 /**
@@ -164,24 +151,25 @@ uint8_t onewire_read_bit(onewire_bus_t *bus)
 {
     uint8_t bit;
 
-    portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
-    portENTER_CRITICAL(&mux);
+    portDISABLE_INTERRUPTS();
 
     // Initiate read slot by pulling bus low
     onewire_set_low(bus);
     onewire_delay_us(ONEWIRE_DELAY_READ_LOW);
 
-    // Release bus and read bit value
+    // Release bus and wait for device to pull down (if sending 0)
     onewire_set_high(bus);
     onewire_delay_us(ONEWIRE_DELAY_READ_WAIT);
+
+    // Read bit value - sample the bus state
     bit = onewire_read_level(bus);
 
-    // Complete read slot
+    // Complete read slot (wait for full time slot)
     onewire_delay_us(ONEWIRE_DELAY_READ_SLOT);
 
-    portEXIT_CRITICAL(&mux);
+    portENABLE_INTERRUPTS();
 
-    return bit;
+    return bit ? 1 : 0;  // Ensure we return 0 or 1
 }
 
 /**

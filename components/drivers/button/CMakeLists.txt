@@ -1,3 +1,3 @@
 idf_component_register(SRCS "button.c"
-                    INCLUDE_DIRS "."
-                    REQUIRES driver)
+                      INCLUDE_DIRS "."
+                      REQUIRES driver common esp_timer)

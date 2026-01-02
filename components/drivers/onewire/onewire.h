@@ -24,15 +24,16 @@ extern "C" {
 /**
  * @brief 1-Wire timing constants (in microseconds)
  * Based on Dallas 1-Wire specification
+ * Adjusted for ESP32-S3 GPIO timing characteristics
  */
-#define ONEWIRE_DELAY_RESET_LOW     480    // Reset pulse duration
+#define ONEWIRE_DELAY_RESET_LOW     480    // Reset pulse duration (min 480us)
 #define ONEWIRE_DELAY_RESET_WAIT    70     // Wait before reading presence pulse
 #define ONEWIRE_DELAY_RESET_READ    410    // Total reset cycle time
-#define ONEWIRE_DELAY_WRITE_LOW     10     // Write 1 low duration
-#define ONEWIRE_DELAY_WRITE_SLOT    55     // Write slot duration
-#define ONEWIRE_DELAY_READ_LOW      3      // Read slot initiation
-#define ONEWIRE_DELAY_READ_WAIT     10     // Wait before reading bit
-#define ONEWIRE_DELAY_READ_SLOT     55     // Read slot duration
+#define ONEWIRE_DELAY_WRITE_LOW     1      // Write 1 low duration (min 1us, keep short)
+#define ONEWIRE_DELAY_WRITE_SLOT    60     // Write slot duration (min 60us)
+#define ONEWIRE_DELAY_READ_LOW      1      // Read slot initiation (min 1us, keep very short)
+#define ONEWIRE_DELAY_READ_WAIT     14     // Wait before sampling (must be < 15us, increased for weak pull-up)
+#define ONEWIRE_DELAY_READ_SLOT     50     // Read slot recovery (total slot ~65us)
 
 /**
  * @brief 1-Wire ROM commands

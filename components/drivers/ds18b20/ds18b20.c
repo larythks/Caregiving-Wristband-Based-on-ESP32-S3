@@ -10,6 +10,7 @@
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "rom/ets_sys.h"
 #include <string.h>
 
 static const char *TAG = "DS18B20";
@@ -149,7 +150,7 @@ esp_err_t ds18b20_start_conversion(ds18b20_device_t *device)
 
     // Reset and select device
     if (!onewire_reset(device->bus)) {
-        ESP_LOGE(TAG, "Device not responding");
+        ESP_LOGE(TAG, "Device not responding during conversion start");
         return ESP_ERR_NOT_FOUND;
     }
 
@@ -161,6 +162,9 @@ esp_err_t ds18b20_start_conversion(ds18b20_device_t *device)
 
     // Start conversion
     onewire_write_byte(device->bus, DS18B20_CMD_CONVERT_T);
+
+    ESP_LOGI(TAG, "Temperature conversion started (will take ~%d ms)",
+             get_conversion_time_ms(device->resolution));
 
     return ESP_OK;
 }
@@ -182,7 +186,7 @@ esp_err_t ds18b20_read_scratchpad(ds18b20_device_t *device, uint8_t *scratchpad)
 
     // Reset and select device
     if (!onewire_reset(device->bus)) {
-        ESP_LOGE(TAG, "Device not responding");
+        ESP_LOGE(TAG, "Device not responding during scratchpad read");
         return ESP_ERR_NOT_FOUND;
     }
 
@@ -194,11 +198,24 @@ esp_err_t ds18b20_read_scratchpad(ds18b20_device_t *device, uint8_t *scratchpad)
 
     // Read scratchpad
     onewire_write_byte(device->bus, DS18B20_CMD_READ_SCRATCHPAD);
+
+    // Use microsecond delay instead of vTaskDelay to avoid task switching
+    // which could cause timing issues
+    ets_delay_us(50);
+
     onewire_read_bytes(device->bus, scratchpad, 9);
 
+    // Log scratchpad data for debugging (use INFO level for visibility)
+    ESP_LOGI(TAG, "Scratchpad: %02X %02X %02X %02X %02X %02X %02X %02X [CRC: %02X]",
+             scratchpad[0], scratchpad[1], scratchpad[2], scratchpad[3],
+             scratchpad[4], scratchpad[5], scratchpad[6], scratchpad[7],
+             scratchpad[8]);
+
     // Verify CRC
-    if (onewire_crc8(scratchpad, 8) != scratchpad[8]) {
-        ESP_LOGE(TAG, "Scratchpad CRC mismatch");
+    uint8_t calculated_crc = onewire_crc8(scratchpad, 8);
+    if (calculated_crc != scratchpad[8]) {
+        ESP_LOGE(TAG, "Scratchpad CRC mismatch! Expected: 0x%02X, Got: 0x%02X",
+                 calculated_crc, scratchpad[8]);
         return ESP_ERR_INVALID_CRC;
     }
 
@@ -226,8 +243,10 @@ esp_err_t ds18b20_read_temperature_async(ds18b20_device_t *device, float *temper
         return ret;
     }
 
-    // Extract temperature from scratchpad
+    // Extract temperature from scratchpad (bytes 0 and 1)
     int16_t raw_temp = (scratchpad[1] << 8) | scratchpad[0];
+
+    ESP_LOGI(TAG, "Raw temperature: 0x%04X (%d decimal)", (uint16_t)raw_temp, raw_temp);
 
     // Convert to Celsius based on resolution
     switch (device->resolution) {
@@ -242,14 +261,14 @@ esp_err_t ds18b20_read_temperature_async(ds18b20_device_t *device, float *temper
             break;
         case DS18B20_RESOLUTION_12BIT:
         default:
-            // Use all bits
+            // Use all bits (no masking needed)
             break;
     }
 
     // Convert to float (LSB = 0.0625°C)
     *temperature = (float)raw_temp * 0.0625f;
 
-    ESP_LOGD(TAG, "Temperature: %.2f°C (raw: 0x%04X)", *temperature, raw_temp);
+    ESP_LOGI(TAG, "Converted temperature: %.4f°C (raw: 0x%04X)", *temperature, (uint16_t)raw_temp);
 
     return ESP_OK;
 }
@@ -276,8 +295,13 @@ esp_err_t ds18b20_read_temperature(ds18b20_device_t *device, float *temperature)
     }
 
     // Wait for conversion to complete
+    // For external power mode, simple delay is sufficient
+    // For parasitic mode, the pull-up resistor keeps the bus high during conversion
     uint16_t conversion_time = get_conversion_time_ms(device->resolution);
     vTaskDelay(pdMS_TO_TICKS(conversion_time));
+
+    // Give the bus a moment to stabilize before reading
+    vTaskDelay(pdMS_TO_TICKS(10));
 
     // Read temperature
     return ds18b20_read_temperature_async(device, temperature);
@@ -313,11 +337,48 @@ esp_err_t ds18b20_is_parasitic_power(ds18b20_device_t *device, bool *parasitic)
     // Read power supply command
     onewire_write_byte(device->bus, DS18B20_CMD_READ_POWER_SUPPLY);
 
-    // Read response (0 = parasitic, 1 = external power)
+    // CRITICAL: After sending READ POWER SUPPLY command, the DS18B20 will
+    // actively pull the line LOW if in parasitic mode, or allow it to be
+    // pulled HIGH (by pull-up resistor) if in external power mode.
+    //
+    // We need to:
+    // 1. Initiate a read time slot (pull low briefly, then release)
+    // 2. Wait for the device to respond
+    // 3. Sample the bus level
+    //
+    // This is exactly what onewire_read_bit() does, but we need to ensure
+    // proper timing. Let's add a small delay first for the device to prepare.
+
+    // Wait a bit for device to be ready (DS18B20 datasheet says ~10us)
+    ets_delay_us(20);
+
+    // Now read the power mode bit using standard read slot timing
+    // The DS18B20 will actively drive the line during the read slot
     uint8_t power_mode = onewire_read_bit(device->bus);
-    *parasitic = (power_mode == 0);
+
+    ESP_LOGI(TAG, "Power supply read bit: %d (0=parasitic, 1=external)", power_mode);
+
+    // Read it a second time to verify (sometimes first read is unreliable)
+    ets_delay_us(10);
+    uint8_t power_mode_verify = onewire_read_bit(device->bus);
+
+    ESP_LOGI(TAG, "Power supply verify bit: %d", power_mode_verify);
+
+    // Use the second reading (more reliable)
+    *parasitic = (power_mode_verify == 0);
 
     ESP_LOGI(TAG, "Power mode: %s", *parasitic ? "Parasitic" : "External");
+
+    // If parasitic mode is detected during development, log a warning
+    if (*parasitic) {
+        ESP_LOGW(TAG, "============================================");
+        ESP_LOGW(TAG, "Parasitic mode detected!");
+        ESP_LOGW(TAG, "If using external power (VDD to 3.3V):");
+        ESP_LOGW(TAG, "  - Check VDD pin connection");
+        ESP_LOGW(TAG, "  - Ensure VDD is connected to 3.3V, not GND");
+        ESP_LOGW(TAG, "  - Verify no short to GND on VDD pin");
+        ESP_LOGW(TAG, "============================================");
+    }
 
     return ESP_OK;
 }
